@@ -1,0 +1,15 @@
+# pdf docs
+*.pdf
+
+# results
+results/
+result/
+reports/
+report/
+work/
+
+
+# AI Session
+sessions/
+session/
+*seesion*
