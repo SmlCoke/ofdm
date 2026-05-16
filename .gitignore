@@ -7,7 +7,7 @@ result/
 reports/
 report/
 work/
-
+*.mat
 
 # AI Session
 sessions/
