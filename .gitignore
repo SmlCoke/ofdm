@@ -9,7 +9,30 @@ report/
 work/
 *.mat
 
+# vivado
+*.jou
+*.log
+*.backup.jou
+*.backup.log
+*.backup.tcl
+*.backup.xdc
+*.backup.v
+*.backup.sv
+*.backup.vh
+.Xil/
+
+# modelsim
+modelsim_work/
+modelsim.ini
+modelsim_*
+
+
 # AI Session
 sessions/
 session/
 *seesion*
+
+# test data
+data/
+test_data/
+test/

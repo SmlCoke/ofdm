@@ -1,9 +1,9 @@
-function [out_re, out_im] = fft_ifft_fixed(in_re, in_im, mode)
+function [out_re, out_im, stats] = fft_ifft_fixed(in_re, in_im, mode, frac_bits)
 %FFT_IFFT_FIXED 128-point fixed-point FFT/IFFT reference model.
-%   mode = 0: FFT,  mode = 1: IFFT
-%   Input/output format is signed 16-bit Q15. The implementation matches
-%   the RTL: radix-2 DIT, bit-reversed input order, Q15 twiddle LUT, and
-%   one-bit right shift after every butterfly stage.
+%   mode = 0: FFT, mode = 1: IFFT
+%   frac_bits controls Q format: Q(16-frac_bits).frac_bits.
+%   stats.twiddle_clip_cnt: twiddle saturation count
+%   stats.data_clip_cnt   : output saturation count
 
 N = 128;
 if numel(in_re) ~= N || numel(in_im) ~= N
@@ -12,9 +12,16 @@ end
 if ~(mode == 0 || mode == 1)
     error('mode must be 0 for FFT or 1 for IFFT.');
 end
+if nargin < 4
+    frac_bits = 15;
+end
+if frac_bits < 8 || frac_bits > 15
+    error('frac_bits must be in [8, 15].');
+end
 
 xr = zeros(N, 1, 'int64');
 xi = zeros(N, 1, 'int64');
+twiddle_clip = 0;
 
 for n = 0:N-1
     addr = bit_reverse7(n) + 1;
@@ -32,9 +39,10 @@ while half < N
             b = a + half;
             k = j * step;
 
-            [wr, wi] = twiddle_q15(k, mode);
-            tr = q15_mul_sub(xr(b), xi(b), wr, wi);
-            ti = q15_mul_add(xr(b), xi(b), wr, wi);
+            [wr, wi, tw_clip] = twiddle_q(k, mode, frac_bits);
+            twiddle_clip = twiddle_clip + tw_clip;
+            tr = q_mul_sub(xr(b), xi(b), wr, wi, frac_bits);
+            ti = q_mul_add(xr(b), xi(b), wr, wi, frac_bits);
 
             ar = xr(a);
             ai = xi(a);
@@ -47,33 +55,39 @@ while half < N
     half = half * 2;
 end
 
-out_re = q15_saturate(xr);
-out_im = q15_saturate(xi);
+out_re = q_saturate16(xr);
+out_im = q_saturate16(xi);
+stats.twiddle_clip_cnt = twiddle_clip;
+stats.data_clip_cnt = sum((xr > 32767) | (xr < -32768)) + ...
+                      sum((xi > 32767) | (xi < -32768));
 end
 
 function y = arshift1(x)
 y = int64(floor(double(x) / 2));
 end
 
-function y = q15_mul_sub(ar, ai, br, bi)
-y = int64(floor(double(ar * br - ai * bi) / 32768));
+function y = q_mul_sub(ar, ai, br, bi, frac_bits)
+y = int64(floor(double(ar * br - ai * bi) / (2^frac_bits)));
 end
 
-function y = q15_mul_add(ar, ai, br, bi)
-y = int64(floor(double(ar * bi + ai * br) / 32768));
+function y = q_mul_add(ar, ai, br, bi, frac_bits)
+y = int64(floor(double(ar * bi + ai * br) / (2^frac_bits)));
 end
 
-function [wr, wi] = twiddle_q15(k, mode)
+function [wr, wi, clip_cnt] = twiddle_q(k, mode, frac_bits)
 angle = 2 * pi * double(k) / 128;
-wr = int64(q15_scalar(cos(angle)));
+[wr16, c1] = q_scalar(cos(angle), frac_bits);
 if mode == 0
-    wi = int64(q15_scalar(-sin(angle)));
+    [wi16, c2] = q_scalar(-sin(angle), frac_bits);
 else
-    wi = int64(q15_scalar(sin(angle)));
+    [wi16, c2] = q_scalar(sin(angle), frac_bits);
 end
+wr = int64(wr16);
+wi = int64(wi16);
+clip_cnt = c1 + c2;
 end
 
-function y = q15_saturate(x)
+function y = q_saturate16(x)
 y = zeros(size(x), 'int16');
 for i = 1:numel(x)
     if x(i) > 32767
@@ -86,12 +100,16 @@ for i = 1:numel(x)
 end
 end
 
-function y = q15_scalar(x)
-v = round(x * 32768);
+function [y, clipped] = q_scalar(x, frac_bits)
+scale = 2^frac_bits;
+v = round(x * scale);
+clipped = 0;
 if v > 32767
     v = 32767;
+    clipped = 1;
 elseif v < -32768
     v = -32768;
+    clipped = 1;
 end
 y = int16(v);
 end
