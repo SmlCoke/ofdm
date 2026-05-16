@@ -36,3 +36,6 @@ session/
 data/
 test_data/
 test/
+
+# config
+.claude/
