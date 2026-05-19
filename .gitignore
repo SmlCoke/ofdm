@@ -39,3 +39,19 @@ test/
 
 # config
 .claude/
+
+# member drop-in folders (merge into src/ then remove; do not commit)
+cx/
+zcx/
+yjl/
+
+# report figures/csv (regenerate locally; see report_assets/README.md)
+report_assets/figures/
+report_assets/results/
+src/matlab/cordic_fft/figures/
+src/matlab/cordic_fft/results/
+src/matlab/ofdm_cordic/figures/
+src/matlab/ofdm_cordic/results/
+
+# lab report
+lab_report/
