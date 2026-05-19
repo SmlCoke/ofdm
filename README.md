@@ -94,7 +94,17 @@ matlab -batch "cd('src/matlab/ofdm_cordic'); run_ofdm_cordic_ber_comparison(100,
 
 ---
 
-## V. 设计进度
+## V. Contributors and Design Status
+
+### 5.1 Contributors and Task Allocation
+
+| Contributors | Tasks |
+| --- | --- | --- |
+| SmlCoke | FFT/IFFT MATLAB and RTL Implementation |
+|      |  OFDM System Simulation | 
+|      |  CORDIC Algorithm Implementation|   
+
+### 5.2 Design Progress
 
 | 阶段 | 内容 | 进度 |
 | --- | --- | --- |
