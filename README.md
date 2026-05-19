@@ -102,7 +102,7 @@ matlab -batch "cd('src/matlab/ofdm_cordic'); run_ofdm_cordic_ber_comparison(100,
 | --- | --- |
 | SmlCoke | FFT/IFFT MATLAB and RTL Implementation |
 |      |  OFDM System Simulation | 
-|      |  CORDIC Algorithm Implementation|   
+| zhangchengxiang316 |  CORDIC Algorithm Implementation|   
 
 ### 5.2 Design Progress
 
